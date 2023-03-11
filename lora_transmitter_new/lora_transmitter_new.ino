@@ -1,62 +1,43 @@
 /*  
-  =========================================================================
-  Utilization: ARGUS III Transmitter LoRa Module
+  ==================================================================== 
+  Utilization: ARGUS III Lora Transceiver with GUI Test (Transmitter)
   Programmer 1: Anthony B. Duyan Jr. (RedID: 824809096)
   Programmer 2: Joseph Solis (RedID: 824761763)
-  Date: 11/18/22
-  =========================================================================
+  Date: 3/4/23
+  ==================================================================== 
 */
-#include "max6675.h" 
 #include <Wire.h>
+#include "max6675.h"
+#include <LowPower.h> 
 
 int SO = 12;
 int CS = 10;
 int sck = 13;
 MAX6675 module(sck, CS, SO);
 
-const int flamePin1 = 8;
-const int flamePin2 = 7;
-const int flamePin3 = 2;
+const int flamePin1 = 6;
+const int flamePin2 = 5;
+const int flamePin3 = 4;
 int Flame1 = HIGH;
 int Flame2 = HIGH;
 int Flame3 = HIGH;
 
+// Timing delays without delay function
+long previousMillis = 0;        // will store last time it was updated
+long interval = 1000;           // interval at which to count (milliseconds)
 
+const String sndMessage = "AT+SEND=0,";
 //  Setup code to run once.
 void setup() 
 {
   
+//Save Power by writing all Digital IO LOW 
+  for (int i = 0; i < 20; i++)
+  {
+    pinMode(i, OUTPUT);
+  }
 
   Serial.begin(115200);     // Default baudrate of module is 115200
-  delay(2000);              // Wait for Lora device to be ready
-
-  Serial.print("AT\r\n");
-  delay(1000);
-
-  Serial.print("AT+PARAMETER=10,7,1,7\r\n");      //For Less than 3Kms
-  //Serial.print("AT+PARAMETER=10,7,1,7\r\n");    //For More than 3Kms
-  delay(100);               //wait for module to respond
-
-  Serial.print("AT+BAND=915000000\r\n");          //Bandwidth set to 915MHz
-  delay(100);               //wait for module to respond
-
-  Serial.print("AT+ADDRESS=115\r\n");             //needs to be unique
-  delay(100);               //wait for module to respond
-
-  Serial.print("AT+NETWORKID=8\r\n");             //needs to be same for receiver and transmitter
-  delay(100);               //wait for module to respond
-
-  // Serial.print("AT+PARAMETER?\r\n");              //prints the current parameters
-  // delay(100);   //wait for module to respond
-
-  // Serial.print("AT+BAND?\r\n");                   //prints the current bandwidth
-  // delay(100);   //wait for module to respond
-
-  // Serial.print("AT+NETWORKID?\r\n");              //prints the network id
-  // delay(100);   //wait for module to respond
-
-  // Serial.print("AT+ADDRESS?\r\n");                //prints the address
-  // delay(100);   //wait for module to respond
 
   //Initialize I2C Communication
   Wire.begin();
@@ -66,57 +47,75 @@ void setup()
   Wire.write(0x90);
   Wire.write(0x00);
   Wire.endTransmission();
-  //Delay for Startup of HDC1080
   delay(20);
 
   pinMode(flamePin1, INPUT);
   pinMode(flamePin2, INPUT);
   pinMode(flamePin3, INPUT);
 
+
 }
 
 void loop() 
 {
-  // Wait 5s between measurements.
 
-  delay(5000);
-
-  // Flame sensors
-  String condition;
-
-  Flame1 = digitalRead(flamePin1);
-  Flame2 = digitalRead(flamePin2);
-  Flame3 = digitalRead(flamePin3);
-
-  if ((Flame1 == LOW) || (Flame2 == LOW) || (Flame3 == LOW))
-  {
-    condition = "FIRE";
-  }
-  else
-  {
-    condition = "No fire";
-  }
-
-  // HDC1080
-  double temp;
-  double h;
-  h = readSensor(&temp);
-
-  String humidity = String(h);
-  String temperature = String(temp);
+  unsigned long currentMillis = millis();
   
-  // Thermocoupler
-  float couplerNum = module.readCelsius();
-  String coupler =  String(couplerNum);
+  if((currentMillis - previousMillis) > interval)
+  {
+    // Counter
+    previousMillis = currentMillis;
 
-  String values = "Humidity is " + humidity + ", Temperature is " + temperature + "C ("  
-                + "F) \nCondition: " + condition + " Thermalcoupler outside temp: " + coupler 
-                + "C";
-  String msgLength = String(values.length());
 
-  // DATA TRANSMISSION
-  Serial.print("AT+SEND=117," + msgLength + "," + values + "\r\n");
+    // Flame sensors
+    String condition;
+    int flameCount = 0;
 
+    Flame1 = digitalRead(flamePin1);
+    Flame2 = digitalRead(flamePin2);
+    Flame3 = digitalRead(flamePin3);
+  
+
+    if ((Flame1 == LOW) || (Flame2 == LOW) || (Flame3 == LOW))
+    {
+      condition = "FIRE";
+      if (Flame1 == LOW)
+        flameCount += 1;
+      if (Flame2 == LOW)
+        flameCount += 1;
+      if (Flame3 == LOW)
+        flameCount += 1;
+    }
+    else
+    {
+      condition = "No fire";
+      flameCount = 0;
+    }
+
+    // Thermocoupler
+    float couplerNum = module.readCelsius();
+    String coupler =  String(couplerNum);
+
+    // HDC1080
+    double temp;
+    double h;
+    h = readSensor(&temp);
+
+    String humidity = String(h);
+    String temperature = String(temp);
+    String values = condition + " Temp:" + temperature + "C" + " Humidity:" + humidity
+                  + "Coupler Temp:" + coupler + "C "
+                  + "GUI:!" +  coupler + "@" + temperature + "$" + humidity + "&"
+                  +  flameCount + "*";
+
+    String msgLength = String(values.length());
+    Serial.print(sndMessage + msgLength + "," + values + "\r\n");
+
+  }
+  for(int i = 0; i<= 2; i++)
+  {
+    LowPower.idle(SLEEP_8S, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF,SPI_OFF, USART0_OFF, TWI_OFF);
+  }
 }
 
 double readSensor(double* temperature)
@@ -138,7 +137,7 @@ double readSensor(double* temperature)
   delay(20);
   //Request four bytes from registers
   Wire.requestFrom(0x40, 4);
-  delay(1);
+
   //If the 4 bytes were returned sucessfully
   if (4 <= Wire.available())
   {
