@@ -83,7 +83,12 @@ void loop()
     Flame4 = digitalRead(flamePin4);
   
 
-    if ((Flame1 == LOW) || (Flame2 == LOW) || (Flame3 == LOW) || (Flame4 == LOW))
+
+   
+
+    LowPower.idle(SLEEP_8S, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF,SPI_OFF, USART0_OFF, TWI_OFF);
+     if ((Flame1 == LOW) || (Flame2 == LOW) || (Flame3 == LOW) || (Flame4 == LOW))
+
     {
       condition = "FIRE";
       if (Flame1 == LOW)
