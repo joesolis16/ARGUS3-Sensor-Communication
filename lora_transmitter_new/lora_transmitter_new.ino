@@ -75,7 +75,7 @@ void loop()
     Flame2 = digitalRead(flamePin2);
     Flame3 = digitalRead(flamePin3);
   
-
+    LowPower.idle(SLEEP_8S, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF,SPI_OFF, USART0_OFF, TWI_OFF);
     if ((Flame1 == LOW) || (Flame2 == LOW) || (Flame3 == LOW))
     {
       condition = "FIRE";
@@ -112,7 +112,7 @@ void loop()
     Serial.print(sndMessage + msgLength + "," + values + "\r\n");
 
   }
-  LowPower.idle(SLEEP_8S, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF,SPI_OFF, USART0_OFF, TWI_OFF);
+  
 }
 
 double readSensor(double* temperature)
