@@ -1,3 +1,4 @@
+
 /*  
   ==================================================================== 
   Utilization: ARGUS III Lora Transceiver with GUI Test (Transmitter)
@@ -18,9 +19,12 @@ MAX6675 module(sck, CS, SO);
 const int flamePin1 = 6;
 const int flamePin2 = 5;
 const int flamePin3 = 4;
+const int flamePin4 = 7;
+
 int Flame1 = HIGH;
 int Flame2 = HIGH;
 int Flame3 = HIGH;
+int Flame4 = HIGH;
 
 // Timing delays without delay function
 long previousMillis = 0;        // will store last time it was updated
@@ -52,6 +56,7 @@ void setup()
   pinMode(flamePin1, INPUT);
   pinMode(flamePin2, INPUT);
   pinMode(flamePin3, INPUT);
+  pinMode(flamePin4, INPUT);
 
 
 }
@@ -60,6 +65,7 @@ void loop()
 {
 
   unsigned long currentMillis = millis();
+  int flameCount = 0;
   
   if((currentMillis - previousMillis) > interval)
   {
@@ -69,14 +75,15 @@ void loop()
 
     // Flame sensors
     String condition;
-    int flameCount = 0;
+    
 
     Flame1 = digitalRead(flamePin1);
     Flame2 = digitalRead(flamePin2);
     Flame3 = digitalRead(flamePin3);
+    Flame4 = digitalRead(flamePin4);
   
 
-    if ((Flame1 == LOW) || (Flame2 == LOW) || (Flame3 == LOW))
+    if ((Flame1 == LOW) || (Flame2 == LOW) || (Flame3 == LOW) || (Flame4 == LOW))
     {
       condition = "FIRE";
       if (Flame1 == LOW)
@@ -85,6 +92,9 @@ void loop()
         flameCount += 1;
       if (Flame3 == LOW)
         flameCount += 1;
+      if (Flame4 == LOW) 
+        flameCount += 1;        
+                   
     }
     else
     {
@@ -112,7 +122,7 @@ void loop()
     Serial.print(sndMessage + msgLength + "," + values + "\r\n");
 
   }
-  LowPower.idle(SLEEP_8S, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF,SPI_OFF, USART0_OFF, TWI_OFF);
+  
 }
 
 double readSensor(double* temperature)
