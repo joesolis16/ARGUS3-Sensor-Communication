@@ -26,11 +26,9 @@ int Flame2 = HIGH;
 int Flame3 = HIGH;
 int Flame4 = HIGH;
 
-int flameCount = 0;
-
 // Timing delays without delay function
 long previousMillis = 0;        // will store last time it was updated
-long interval = 300;           // interval at which to count (milliseconds)
+long interval = 1000;           // interval at which to count (milliseconds)
 
 const String sndMessage = "AT+SEND=0,";
 //  Setup code to run once.
@@ -60,13 +58,13 @@ void setup()
   pinMode(flamePin3, INPUT);
   pinMode(flamePin4, INPUT);
 
-
 }
 
 void loop() 
 {
 
   unsigned long currentMillis = millis();
+  int flameCount = 0;
   
   if((currentMillis - previousMillis) > interval)
   {
@@ -84,24 +82,12 @@ void loop()
     Flame4 = digitalRead(flamePin4);
   
 
-    if(flameCount == 0)
-    {
-      for(int i = 0; i <= 10; i++)
-      {
-        LowPower.idle(SLEEP_1S, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF,SPI_OFF, USART0_OFF, TWI_OFF);
-      }
-    }
-    else
-    {
-      for(int j = 0; j <= 4; j++)
-      {
-        LowPower.idle(SLEEP_1S, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF,SPI_OFF, USART0_OFF, TWI_OFF);
-      }
-    }
-    
-    flameCount = 0;
 
-    if ((Flame1 == LOW) || (Flame2 == LOW) || (Flame3 == LOW) || (Flame4 == LOW))
+   
+
+    LowPower.idle(SLEEP_8S, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF,SPI_OFF, USART0_OFF, TWI_OFF);
+     if ((Flame1 == LOW) || (Flame2 == LOW) || (Flame3 == LOW) || (Flame4 == LOW))
+
     {
       condition = "FIRE";
       if (Flame1 == LOW)
@@ -138,8 +124,6 @@ void loop()
 
     String msgLength = String(values.length());
     Serial.print(sndMessage + msgLength + "," + values + "\r\n");
-
-  
 
   }
   
